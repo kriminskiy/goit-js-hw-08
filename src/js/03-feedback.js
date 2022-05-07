@@ -1,44 +1,43 @@
 import throttle from 'lodash.throttle';
 
 const formEl = document.querySelector('.feedback-form');
-const textareaEl = document.querySelector('.feedback-form  textarea');
-const inputEl = document.querySelector('input');
+const emailEl = document.querySelector('[name="email"]');
+const messageEl = document.querySelector('[name="message"]');
 
-const STORAGE_KEY = 'feedback-form-state';
+const KEY = 'feedback-form-state';
 
+formEl.addEventListener('input', throttle(onFormInput, 500));
 formEl.addEventListener('submit', onFormSubmit);
-formEl.addEventListener('input', throttle(onTextareaInput, 500));
 
-populateTextarea();
-let formData = {};
-/* - Останавливаем поведение по умолчанию
- * - Убираем сообщение из хранилища
- * - Очищаем форму*/
+let formData = {
+  email: '',
+  message: '',
+};
+
+function onFormInput(evt) {
+  formData[evt.target.name] = evt.target.value;
+  localStorage.setItem(KEY, JSON.stringify(formData));
+}
+
+function onPageReload() {
+  const savedData = JSON.parse(localStorage.getItem(KEY));
+
+  if (savedData) {
+    emailEl.value = savedData.email;
+    messageEl.value = savedData.message;
+
+    formData.email = savedData.email;
+    formData.message = savedData.message;
+  }
+}
+onPageReload();
+
 function onFormSubmit(evt) {
   evt.preventDefault();
+  localStorage.removeItem(KEY);
   evt.currentTarget.reset();
-  localStorage.removeItem(STORAGE_KEY);
-}
-/* - Получаем значение поля
- * - Сохраняем его в хранилище
- * - Можно добавить throttle*/
-function onTextareaInput(evt) {
-  formData[evt.target.name] = evt.target.value;
-  const saveDataEl = JSON.stringify(formData);
-  localStorage.setItem(STORAGE_KEY, saveDataEl);
-  //console.log(saveDataEl)
-}
-/* - Получаем значение из хранилища
- * - Если там что-то было, обновляем DOM*/
-function populateTextarea() {
-  const savedMessage = localStorage.getItem(STORAGE_KEY);
+  console.log(formData);
 
-  if (savedMessage) {
-    const pasrsedSav = JSON.parse(savedMessage);
-    let formData = {};
-    formData = pasrsedSav;
-    textareaEl.value = pasrsedSav.message;
-    inputEl.value = pasrsedSav.email;
-    console.log(pasrsedSav);
-  }
+  formData.email = '';
+  formData.message = '';
 }
